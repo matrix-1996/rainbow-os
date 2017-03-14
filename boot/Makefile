@@ -61,7 +61,7 @@ ifeq ($(TARGET_MACHINE),efi)
 
 else ifeq ($(TARGET_MACHINE),bios)
 
-	SOURCES += platform/bios/bios.s platform/bios/entry.s platform/bios/bios.cpp platform/bios/libc.cpp platform/bios/vgaconsole.cpp
+	SOURCES += platform/bios/bios.s platform/bios/entry.s platform/bios/bios.cpp platform/bios/newlib_stubs.cpp platform/bios/vgaconsole.cpp
 	LINK_SCRIPT := platform/bios/bios.ld
 
 else ifneq ($(filter $(TARGET_MACHINE),raspi raspi2 raspi3),)
@@ -78,29 +78,6 @@ OBJECTS := $(SOURCES:%=$(BUILDDIR)/%.o)
 DEPENDENCIES := $(OBJECTS:%.o=%.d)
 
 
-# Grab pieces of libc for now
-
-INCLUDES += $(SRCDIR)/libc/include
-
-LIBC_SOURCES := \
-	assert.c \
-	stdio/printf.c \
-	stdio/putchar.c \
-	stdio/puts.c \
-	string/memcpy.c \
-	string/memset.c \
-	string/strcmp.c \
-	string/strlen.c \
-	string/wcslen.c
-
-LIBC_OBJECTS := $(LIBC_SOURCES:%=$(BUILDDIR)/libc/%.o)
-
-LIBC_DEPENDENCIES := $(LIBC_OBJECTS:%.o=%.d)
-
-OBJECTS += $(LIBC_OBJECTS)
-DEPENDENCIES += $(LIBC_DEPENDENCIES)
-
-
 
 ###############################################################################
 #
@@ -111,7 +88,7 @@ DEPENDENCIES += $(LIBC_DEPENDENCIES)
 include $(SRCDIR)/mk/toolchain.mk
 
 CFLAGS   += -ffreestanding -fbuiltin
-CXXFLAGS += -ffreestanding -fbuiltin -fno-exceptions -fno-rtti
+CXXFLAGS += -ffreestanding -fbuiltin
 ASFLAGS  += -ffreestanding -fbuiltin
 LDFLAGS  += -nostdlib
 
@@ -170,6 +147,8 @@ endif
 ###############################################################################
 
 LIBGCC := $(shell $(CC) $(ARCH_FLAGS) $(CFLAGS) -print-file-name=libgcc.a)
+LIBC := $(shell $(CC) $(ARCH_FLAGS) $(CFLAGS) -print-file-name=libc.a)
+LIBSTDCXX := $(shell $(CC) $(ARCH_FLAGS) $(CFLAGS) -print-file-name=libstdc++.a)
 
 
 .PHONY: all
@@ -189,7 +168,7 @@ else
 
 $(BUILDDIR)/bootloader: $(OBJECTS) $(LINK_SCRIPT)
 	@mkdir -p $(dir $@)
-	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBGCC) -o $@
+	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBGCC) $(LIBC) $(LIBSTDCXX) -o $@
 
 endif
 

@@ -24,26 +24,104 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _RAINBOW_LIBC_ERRNO_H
-#define _RAINBOW_LIBC_ERRNO_H
+#include <errno.h>
+#include <reent.h>
+#include <signal.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-
-#define EINVAL 21
-#define ENOMEM 23
+#include "vgaconsole.hpp"
 
 
-
-//todo: this needs to be per-thread
-extern int errno;
+extern VgaConsole g_console;
 
 
-#ifdef __cplusplus
+
+extern "C" void _exit(int)
+{
+    //todo: reboot the system or something
+    for (;;)
+    {
+        asm("cli; hlt");
+    }
 }
-#endif
 
-#endif
+
+extern "C" int close(int)
+{
+    errno = EBADF;
+    return -1;
+}
+
+
+extern "C" int fstat(int, struct stat* st)
+{
+    st->st_mode = S_IFCHR;
+    return  0;
+}
+
+
+extern "C" pid_t getpid(void)
+{
+    return 1;
+}
+
+
+extern "C" int isatty(int)
+{
+    return 1;
+}
+
+
+extern "C" int kill(pid_t, int)
+{
+    errno = EINVAL;
+    return -1;
+}
+
+
+extern "C" off_t lseek(int, off_t, int)
+{
+    return 0;
+}
+
+
+extern "C" int read(int, void*, size_t)
+{
+    return 0;
+}
+
+
+extern "C" int write(int, const void* buffer, size_t nbBytes)
+{
+    return g_console.Print((const char*)buffer, nbBytes);
+}
+
+
+
+#define HEAPSIZE (1024 * 1024)
+
+static unsigned char _heap[HEAPSIZE];
+
+extern "C" void* sbrk(ptrdiff_t incr)
+{
+    static unsigned char* heap_end;
+    unsigned char *prev_heap_end;
+
+    if (heap_end == 0 )
+    {
+        heap_end = _heap;
+    }
+
+    prev_heap_end = heap_end;
+
+    if (heap_end + incr - _heap > HEAPSIZE)
+    {
+        errno = ENOMEM;
+        return (void*)-1;
+    }
+
+    heap_end += incr;
+
+    return prev_heap_end;
+}
