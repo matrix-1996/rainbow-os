@@ -64,6 +64,7 @@ SECTIONS
     .bss :
     {
         *(.bss)
+        *(COMMON)
     } : segment_data
 
     /DISCARD/ :

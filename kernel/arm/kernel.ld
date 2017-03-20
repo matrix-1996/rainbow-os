@@ -65,6 +65,7 @@ SECTIONS
     .bss :
     {
         *(.bss)
+        *(COMMON)
     } : segment_data
     . = ALIGN(16);
 

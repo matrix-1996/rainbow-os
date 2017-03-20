@@ -71,6 +71,7 @@ SECTIONS
     .bss :
     {
         *(.bss)
+        *(COMMON)
     } : data
     _bss_end = .;
 

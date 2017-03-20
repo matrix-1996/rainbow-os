@@ -93,7 +93,7 @@ SECTIONS
         . = ALIGN(8);
         __bss_start = .;
         *(.bss)
-        *(.bss.*)
+        *(COMMON)
         __bss_end = .;
 
         . = ALIGN(8);

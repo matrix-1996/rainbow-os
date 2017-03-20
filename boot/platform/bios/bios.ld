@@ -70,6 +70,7 @@ SECTIONS
     .bss :
     {
         *(.bss)
+        *(COMMON)
     } : data
 
     /DISCARD/ :
