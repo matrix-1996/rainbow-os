@@ -32,19 +32,22 @@
 
 ifeq ($(TARGET_MACHINE),raspi)
 	# Processor is BCM2835 (ARMv6)
-	TOOLPREFIX ?= armv6-raspi-eabi-
+	TOOLPREFIX ?= armv6-raspi-eabihf-
 	TARGET_ARCH := arm
 	ARCH_FLAGS := -march=armv6kz -mtune=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp # OK: vfp is equivalent to vfpv2, which is not a supported option anymore
 else ifeq ($(TARGET_MACHINE),raspi2)
 	# Processor is BCM2836 (ARMv7)
+	TOOLPREFIX ?= armv7-raspi2-eabihf-
 	TARGET_ARCH := arm
 	ARCH_FLAGS := -march=armv7-a -mtune=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4
 else ifeq ($(TARGET_MACHINE),raspi3)
 	# Processor is BCM2837 (ARMv8)
 	ifeq ($(TARGET_ARCH),aarch64)
+		TOOLPREFIX ?= aarch64-raspi3-elf-
 		ARCH_FLAGS := -march=armv8-a+crc -mtune=cortex-a53 -mabi=lp64 -mlittle-endian -mfix-cortex-a53-835769 -mfix-cortex-a53-843419 -Wno-format #-mgeneral-regs-only
 		LDFLAGS += --fix-cortex-a53-835769 --fix-cortex-a53-843419
 	else
+		TOOLPREFIX ?= armv8-raspi3-eabihf-
 		TARGET_ARCH := arm
 		ARCH_FLAGS := -march=armv8-a+crc -mtune=cortex-a53 -mfloat-abi=hard -mfpu=crypto-neon-fp-armv8
 	endif
@@ -81,7 +84,7 @@ ifndef TOOLPREFIX
 endif
 
 CC			:= $(TOOLPREFIX)gcc
-CXX			:= $(TOOLPREFIX)gcc
+CXX			:= $(TOOLPREFIX)g++
 LD			:= $(TOOLPREFIX)ld
 AS			:= $(TOOLPREFIX)gcc
 OBJCOPY		:= $(TOOLPREFIX)objcopy
@@ -95,7 +98,7 @@ CXXFLAGS	+= -O2 -Wall -Wextra -Werror -std=gnu++11
 ASFLAGS		+= -O2 -Wall -Wextra -Werror
 
 LIBRARIES	+=
-LDFLAGS		+= --warn-common --fatal-warnings --no-undefined
+LDFLAGS		+= #--warn-common --fatal-warnings --no-undefined
 
 
 ifneq (mingw, $(findstring mingw, $(TOOLPREFIX)))

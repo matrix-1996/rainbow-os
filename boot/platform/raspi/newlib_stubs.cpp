@@ -24,11 +24,22 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <errno.h>
+#include <reent.h>
+#include <signal.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <rainbow/arch.hpp>
+#include "boot.hpp"
 
 extern char* PERIPHERAL_BASE;
 
+// fixme: stdio defines these as macros and we use them as method names in UART
+#undef getc
+#undef putc
 
 #define GPIO_BASE                           (PERIPHERAL_BASE + 0x00200000)  // GPIO Base Address
 #define GPIO_GPFSEL0                        (GPIO_BASE + 0x00000000)        // GPIO Function Select 0
@@ -276,41 +287,137 @@ static RaspberryMiniUart uart;
 
 
 
+extern "C" void __libc_init_array();
+
+extern "C" void _init()
+{
+    //todo: not sure what goes here...
+}
+
+
 void libc_initialize()
 {
     uart.Initialize();
+
+    // // Clear BSS
+    // extern char __bss_start[];
+    // extern char __bss_end[];
+    // memset(__bss_start, 0, __bss_end - __bss_start);
+
+    __libc_init_array();
+
+    // Disable buffering of stdout
+    setvbuf(stdout, NULL, _IONBF, 0);
 }
 
 
 
-extern "C" int _libc_print(const char* string)
+
+extern "C" void _exit(int status)
 {
-    size_t length = 0;
-    for (const char* p = string; *p; ++p, ++length)
-    {
-        uart.putc(*p);
-    }
-
-    return length;
-}
-
-
-
-extern "C" int getchar()
-{
-    return uart.getc();
-}
-
-
-
-extern "C" void abort()
-{
-    getchar();
-
-    //todo: reset system? how?
-
+    (void) status;
+    //todo: reboot the system or something
     for (;;)
     {
         //todo: asm("cli; hlt");
     }
+}
+
+
+
+extern "C" int _close(int fd)
+{
+    (void) fd;
+    errno = EBADF;
+    return -1;
+}
+
+
+
+extern "C" int _fstat(int fd, struct stat* st)
+{
+    (void) fd;
+    st->st_mode = S_IFCHR;
+    return  0;
+}
+
+
+
+extern "C" pid_t _getpid()
+{
+    return 1;
+}
+
+
+
+extern "C" int _isatty(int fd)
+{
+    (void) fd;
+    return 1;
+}
+
+
+
+extern "C" int _kill(pid_t pid, int sig)
+{
+    (void) pid;
+    (void) sig;
+    errno = EINVAL;
+    return -1;
+}
+
+
+
+extern "C" int _lseek(int fd, int position, int whence)
+{
+    (void) fd;
+    (void) position;
+    (void) whence;
+    return 0;
+}
+
+
+
+extern "C" int _read(int fd, char* buffer, int count)
+{
+    (void) fd;
+    (void) buffer;
+    (void) count;
+    return 0;
+}
+
+
+
+extern "C" int _write(int fd, char* buffer, int count)
+{
+    (void) fd;
+    for (int i = 0; i != count; ++i)
+    {
+        uart.putc(buffer[i]);
+    }
+    return count;
+}
+
+
+
+extern char __heap_start[];
+extern char __heap_end[];
+
+static char* currentBrk = __heap_start;
+
+extern "C" caddr_t _sbrk(int incr)
+{
+    incr = align_up(incr, 8);
+
+    char* previousBrk = currentBrk;
+
+    if (currentBrk + incr > __heap_end)
+    {
+        errno = ENOMEM;
+        return (caddr_t)-1;
+    }
+
+    currentBrk += incr;
+
+    return previousBrk;
 }

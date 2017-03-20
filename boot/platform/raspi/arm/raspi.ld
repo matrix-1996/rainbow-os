@@ -46,33 +46,67 @@ SECTIONS
 
     .text :
     {
-        *(.boot)    /* Make sure boot code is at the beginning of the image */
+        *(.boot)        /* Make sure boot code is at the beginning of the image */
         *(.text)
     } : text
 
     .rodata :
     {
         *(.rodata*)
+
+        . = ALIGN(4);
+        __preinit_array_start = .;
+        *(.preinit_array)
+        __preinit_array_end = .;
+
+        . = ALIGN(4);
+        __init_array_start = .;
+        *(SORT(.init_array.*));
+        *(.init_array);
+        __init_array_end = .;
+
+        . = ALIGN(4);
+        __fini_array_start = .;
+        *(.fini_array);
+        *(SORT(.fini_array.*));
+        __fini_array_end = .;
+
     } : rodata
+
+    .ARM.exidx :
+    {
+        . = ALIGN(4);
+        __exidx_start = .;
+        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+        __exidx_end = .;
+    } : rodata
+
 
     .data :
     {
+        *(.data)
         *(.data*)
-
-        . = ALIGN(4);
-        __CTOR_LIST__ = . ;
-        LONG (-1); *(.ctors); *(.ctor); *(SORT(.ctors.*)); LONG (0);
-        __DTOR_LIST__ = . ;
-        LONG (-1); *(.dtors); *(.dtor); *(SORT(.dtors.*)); LONG (0);
-
     } : data
 
-    _bss_start = .;
-    .bss :
+    .bss (NOLOAD):
     {
+        . = ALIGN(8);
+        __bss_start = .;
         *(.bss)
+        *(.bss.*)
+        __bss_end = .;
+
+        . = ALIGN(8);
+        __stack_start = .;
+        . = . + 65536;
+        __stack_end = .;
+
+        . = ALIGN(8);
+        __heap_start = .;
+        . = . + 1024*1024;
+        __heap_end = .;
+
     } : data
-    _bss_end = .;
 
     /DISCARD/ :
     {

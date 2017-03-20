@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2016, Thierry Tremblay
+    Copyright (c) 2017, Thierry Tremblay
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -24,53 +24,40 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-OUTPUT_FORMAT(elf64-littleaarch64)
-ENTRY(_start)
+#ifndef _RAINBOW_ENDIAN_H
+#define _RAINBOW_ENDIAN_H
+
+#include <stdint.h>
 
 
-PHDRS
-{
-    segment_text PT_LOAD;
-    segment_rodata PT_LOAD;
-    segment_data PT_LOAD;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define LITTLE_ENDIAN 1234
+#define BIG_ENDIAN 4321
+
+//todo: we assume host is little endian
+#define BYTE_ORDER LITTLE_ENDIAN
+
+inline uint16_t htobe16(uint16_t x)     { return __builtin_bswap16(x); }
+inline uint16_t htole16(uint16_t x)     { return x; }
+inline uint16_t be16toh(uint16_t x)     { return x; }
+inline uint16_t le16toh(uint16_t x)     { return __builtin_bswap16(x); }
+
+inline uint32_t htobe32(uint32_t x)     { return __builtin_bswap32(x); }
+inline uint32_t htole32(uint32_t x)     { return x; }
+inline uint32_t be32toh(uint32_t x)     { return __builtin_bswap32(x); }
+inline uint32_t le32toh(uint32_t x)     { return x; }
+
+inline uint64_t htobe64(uint64_t x)     { return __builtin_bswap64(x); }
+inline uint64_t htole64(uint64_t x)     { return x; }
+inline uint64_t be64toh(uint64_t x)     { return __builtin_bswap64(x); }
+inline uint64_t le64toh(uint64_t x)     { return x; }
+
+
+#ifdef __cplusplus
 }
+#endif
 
-
-SECTIONS
-{
-    . = 0xFFFFFFFFF0000000;
-
-    .text BLOCK(4K) :
-    {
-        *(.text)
-    } : segment_text
-
-    .rodata BLOCK(4K) :
-    {
-        *(.rodata*)
-
-    } : segment_rodata
-
-    .data BLOCK(4K) :
-    {
-        *(.data*)
-
-        . = ALIGN(8);
-        __CTOR_LIST__ = . ;
-        QUAD (-1); *(.ctors); *(.ctor); *(SORT(.ctors.*)); QUAD (0);
-
-    } : segment_data
-
-    . = ALIGN(16);
-    .bss :
-    {
-        *(.bss)
-    } : segment_data
-    . = ALIGN(16);
-
-    /DISCARD/ :
-    {
-        *(.comment)
-        *(.eh_frame)
-    }
-}
+#endif

@@ -66,7 +66,7 @@ else ifeq ($(TARGET_MACHINE),bios)
 
 else ifneq ($(filter $(TARGET_MACHINE),raspi raspi2 raspi3),)
 
-	SOURCES += platform/raspi/arm.cpp platform/raspi/libc.cpp platform/raspi/mailbox.cpp platform/raspi/raspi.cpp platform/raspi/$(TARGET_ARCH)/entry.s
+	SOURCES += platform/raspi/arm.cpp platform/raspi/mailbox.cpp platform/raspi/newlib_stubs.cpp platform/raspi/raspi.cpp platform/raspi/$(TARGET_ARCH)/entry.s
 	LINK_SCRIPT := platform/raspi/$(TARGET_ARCH)/raspi.ld
 
 endif
@@ -90,7 +90,7 @@ include $(SRCDIR)/mk/toolchain.mk
 CFLAGS   += -ffreestanding -fbuiltin
 CXXFLAGS += -ffreestanding -fbuiltin
 ASFLAGS  += -ffreestanding -fbuiltin
-LDFLAGS  += -nostdlib
+LDFLAGS  += -nostartfiles
 
 ifneq ($(LINK_SCRIPT),)
 	LDFLAGS := $(LDFLAGS) -T $(LINK_SCRIPT)
@@ -158,7 +158,7 @@ ifneq ($(filter $(TARGET_MACHINE),raspi raspi2 raspi3),)
 
 $(BUILDDIR)/bootloader.elf: $(OBJECTS) $(LINK_SCRIPT)
 	@mkdir -p $(dir $@)
-	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBGCC) -o $@
+	$(CXX) $(LDFLAGS) $(OBJECTS) -o $@
 
 $(BUILDDIR)/bootloader: $(BUILDDIR)/bootloader.elf
 	@mkdir -p $(dir $@)
@@ -168,7 +168,7 @@ else
 
 $(BUILDDIR)/bootloader: $(OBJECTS) $(LINK_SCRIPT)
 	@mkdir -p $(dir $@)
-	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBGCC) $(LIBC) $(LIBSTDCXX) -o $@
+	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBGCC) $(LIBC) -o $@
 
 endif
 

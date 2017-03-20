@@ -51,6 +51,8 @@
 
 ******************************************************************************/
 
+.arch armv6
+
 .section .boot
 
       org = 0x8000
@@ -58,21 +60,39 @@
 .globl _start
 _start:
 
-    // Initialize the stack
-    ldr sp, =_boot_stack_top
+    # Turn on unaligned memory access
+    mrc p15, #0, r3, c1, c0, #0
+    orr r3, #0x400000
+    mcr p15, #0, r3, c1, c0, #0
 
-    // Turn on unaligned memory access
-    mrc p15, #0, r4, c1, c0, #0
-    orr r4, #0x400000
-    mcr p15, #0, r4, c1, c0, #0
+    # Clear BSS
+    # Loader doesn't do it and we can't do it after the stack is setup (since our stack is in the BSS)
+    mov r3, #0
+    ldr r4, =__bss_start - 1
+    ldr r5, =__bss_end - 1
+.loop:
+    cmp r4, r5
+    strltb r3, [r4, #1]!
+    blt .loop
 
-    // Initialize FPU
-    ldr r3, =(0xF << 20)
+    # Initialize the stack
+    ldr sp, =__stack_end
+
+    # Enabled CP10 and CP11
+    mrc p15, #0, r3, c1, c0, #2
+    orr r3, r3, #0xf00000
+
     mcr p15, #0, r3, c1, c0, #2
-    mov r3, #0x40000000
-    vmsr FPEXC, r3
 
-    // Jump to raspi_main
+    # Flush prefetch buffer for FMXR below
+    mov r3, #0
+    mcr p15, #0, r3, c7, c5, #4
+
+    # Enable VFP
+    mov r3, #0x40000000
+    fmxr FPEXC, r3
+
+    # Jump to raspi_main
     b raspi_main
 
 
@@ -86,18 +106,3 @@ _start:
 .globl cpu_delay
 cpu_delay:
     bx lr
-
-
-
-/******************************************************************************
-
-    Boot Stack
-
-******************************************************************************/
-
-.section .bss
-.align 12
-
-_boot_stack:
-.skip 32768
-_boot_stack_top:

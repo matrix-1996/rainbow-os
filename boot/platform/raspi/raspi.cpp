@@ -35,6 +35,7 @@
 #include "mailbox.hpp"
 #include "memory.hpp"
 
+#include <stdlib.h>
 
 static BootInfo g_bootInfo;
 static MemoryMap g_memoryMap;
@@ -62,10 +63,9 @@ extern "C" void raspi_main(unsigned bootDeviceId, unsigned machineId, const void
 extern "C" void raspi_main(const void* parameters)
 #endif
 {
-    // Clear BSS
-    extern char _bss_start[];
-    extern char _bss_end[];
-    memset(_bss_start, 0, _bss_end - _bss_start);
+    (void)bootDeviceId;
+    (void)machineId;
+    (void)parameters;
 
     // Add bootloader (ourself) to memory map
     extern const char bootloader_image_start[];
@@ -78,6 +78,9 @@ extern "C" void raspi_main(const void* parameters)
     PERIPHERAL_BASE = (char*)(uintptr_t)(arm_cpuid_model() == ARM_CPU_MODEL_ARM1176 ? 0x20000000 : 0x3F000000);
     g_memoryMap.AddBytes(MemoryType_Reserved, 0, (uintptr_t)PERIPHERAL_BASE, 0x01000000);
 
+    PERIPHERAL_BASE = (char*)0x3F000000;
+
+    // Initialize C runtime
     libc_initialize();
 
     // Clear screen and set cursor to (0,0)

@@ -108,7 +108,7 @@ void Boot(BootInfo* bootInfo, MemoryMap* memoryMap)
     }
 
     memoryMap->Sanitize();
-    //memoryMap->Print();
+    memoryMap->Print();
     bootInfo->memoryDescriptorCount = memoryMap->size();
     bootInfo->memoryDescriptors = (uintptr_t)memoryMap->begin();
 
