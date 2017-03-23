@@ -297,14 +297,10 @@ extern "C" void _init()
 
 void libc_initialize()
 {
-    uart.Initialize();
-
-    // // Clear BSS
-    // extern char __bss_start[];
-    // extern char __bss_end[];
-    // memset(__bss_start, 0, __bss_end - __bss_start);
-
+    // Call global constructors
     __libc_init_array();
+
+    uart.Initialize();
 
     // Disable buffering of stdout
     setvbuf(stdout, NULL, _IONBF, 0);

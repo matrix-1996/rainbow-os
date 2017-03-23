@@ -60,23 +60,16 @@
 .globl _start
 _start:
 
+    # Initialize the stack
+    ldr sp, =__stack_end
+
+    # Save device tree pointer
+    push {r2}
+
     # Turn on unaligned memory access
     mrc p15, #0, r3, c1, c0, #0
     orr r3, #0x400000
     mcr p15, #0, r3, c1, c0, #0
-
-    # Clear BSS
-    # Loader doesn't do it and we can't do it after the stack is setup (since our stack is in the BSS)
-    mov r3, #0
-    ldr r4, =__bss_start - 1
-    ldr r5, =__bss_end - 1
-.loop:
-    cmp r4, r5
-    strltb r3, [r4, #1]!
-    blt .loop
-
-    # Initialize the stack
-    ldr sp, =__stack_end
 
     # Enabled CP10 and CP11
     mrc p15, #0, r3, c1, c0, #2
@@ -91,6 +84,16 @@ _start:
     # Enable VFP
     mov r3, #0x40000000
     fmxr FPEXC, r3
+
+    # Clear BSS
+    ldr r0, =__bss_start
+    mov r1, #0
+    ldr r2, =__bss_end
+    sub r2, r0
+    bl memset
+
+    # Restore device tree pointer
+    pop {r0}
 
     # Jump to raspi_main
     b raspi_main

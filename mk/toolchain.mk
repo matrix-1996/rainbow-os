@@ -32,24 +32,20 @@
 
 ifeq ($(TARGET_MACHINE),raspi)
 	# Processor is BCM2835 (ARMv6)
-	TOOLPREFIX ?= armv6-raspi-eabihf-
 	TARGET_ARCH := arm
-	ARCH_FLAGS := -march=armv6kz -mtune=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp # OK: vfp is equivalent to vfpv2, which is not a supported option anymore
+	ARCH_FLAGS := -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp # OK: vfp is equivalent to vfpv2, which is not a supported option anymore
 else ifeq ($(TARGET_MACHINE),raspi2)
 	# Processor is BCM2836 (ARMv7)
-	TOOLPREFIX ?= armv7-raspi2-eabihf-
 	TARGET_ARCH := arm
-	ARCH_FLAGS := -march=armv7-a -mtune=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4
+	ARCH_FLAGS := -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4
 else ifeq ($(TARGET_MACHINE),raspi3)
 	# Processor is BCM2837 (ARMv8)
 	ifeq ($(TARGET_ARCH),aarch64)
-		TOOLPREFIX ?= aarch64-raspi3-elf-
-		ARCH_FLAGS := -march=armv8-a+crc -mtune=cortex-a53 -mabi=lp64 -mlittle-endian -mfix-cortex-a53-835769 -mfix-cortex-a53-843419 -Wno-format #-mgeneral-regs-only
-		LDFLAGS += --fix-cortex-a53-835769 --fix-cortex-a53-843419
+		ARCH_FLAGS := -mcpu=cortex-a53 -mabi=lp64 -mlittle-endian -Wno-format #-mgeneral-regs-only
+		LDFLAGS +=
 	else
-		TOOLPREFIX ?= armv8-raspi3-eabihf-
 		TARGET_ARCH := arm
-		ARCH_FLAGS := -march=armv8-a+crc -mtune=cortex-a53 -mfloat-abi=hard -mfpu=crypto-neon-fp-armv8
+		ARCH_FLAGS := -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=crypto-neon-fp-armv8
 	endif
 else
 	TARGET_ARCH ?= x86_64

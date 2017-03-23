@@ -57,31 +57,23 @@ void libc_initialize();
         https://www.raspberrypi.org/forums/viewtopic.php?t=127662&p=854371
 */
 
-#if defined(__arm__)
-extern "C" void raspi_main(unsigned bootDeviceId, unsigned machineId, const void* parameters)
-#elif defined(__aarch64__)
 extern "C" void raspi_main(const void* parameters)
-#endif
 {
-    (void)bootDeviceId;
-    (void)machineId;
-    (void)parameters;
+    // Peripheral base address
+    PERIPHERAL_BASE = (char*)(uintptr_t)(arm_cpuid_model() == ARM_CPU_MODEL_ARM1176 ? 0x20000000 : 0x3F000000);
+
+    // Initialize C runtime - this will call global constructors!
+    libc_initialize();
+
+    // Add peripherals to memory map (after constructors have been called)
+    g_memoryMap.AddBytes(MemoryType_Reserved, 0, (uintptr_t)PERIPHERAL_BASE, 0x01000000);
 
     // Add bootloader (ourself) to memory map
     extern const char bootloader_image_start[];
     extern const char bootloader_image_end[];
-    const physaddr_t start = (physaddr_t)&bootloader_image_start;
-    const physaddr_t end = (physaddr_t)&bootloader_image_end;
+    const physaddr_t start = (physaddr_t)bootloader_image_start;
+    const physaddr_t end = (physaddr_t)bootloader_image_end;
     g_memoryMap.AddBytes(MemoryType_Bootloader, MemoryFlag_ReadOnly, start, end - start);
-
-    // Peripheral base address
-    PERIPHERAL_BASE = (char*)(uintptr_t)(arm_cpuid_model() == ARM_CPU_MODEL_ARM1176 ? 0x20000000 : 0x3F000000);
-    g_memoryMap.AddBytes(MemoryType_Reserved, 0, (uintptr_t)PERIPHERAL_BASE, 0x01000000);
-
-    PERIPHERAL_BASE = (char*)0x3F000000;
-
-    // Initialize C runtime
-    libc_initialize();
 
     // Clear screen and set cursor to (0,0)
     printf("\033[m\033[2J\033[;H");
@@ -90,10 +82,6 @@ extern "C" void raspi_main(const void* parameters)
     printf("\033[31mR\033[1ma\033[33mi\033[1;32mn\033[36mb\033[34mo\033[35mw\033[m");
 
     printf(" Raspberry Pi Bootloader\n\n");
-#if defined(__arm__)
-    printf("bootDeviceId    : 0x%08x\n", bootDeviceId);
-    printf("machineId       : 0x%08x\n", machineId);
-#endif
     printf("parameters      : %p\n", parameters);
     printf("cpu_id          : 0x%08x\n", arm_cpuid_id());
     printf("peripheral_base : %p\n", PERIPHERAL_BASE);

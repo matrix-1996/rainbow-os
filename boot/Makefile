@@ -158,7 +158,7 @@ ifneq ($(filter $(TARGET_MACHINE),raspi raspi2 raspi3),)
 
 $(BUILDDIR)/bootloader.elf: $(OBJECTS) $(LINK_SCRIPT)
 	@mkdir -p $(dir $@)
-	$(CXX) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CXX) $(ARCH_FLAGS) $(LDFLAGS) $(OBJECTS) -o $@
 
 $(BUILDDIR)/bootloader: $(BUILDDIR)/bootloader.elf
 	@mkdir -p $(dir $@)
@@ -168,7 +168,7 @@ else
 
 $(BUILDDIR)/bootloader: $(OBJECTS) $(LINK_SCRIPT)
 	@mkdir -p $(dir $@)
-	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBGCC) $(LIBC) -o $@
+	$(CXX) $(ARCH_FLAGS) $(LDFLAGS) $(OBJECTS) -o $@
 
 endif
 

@@ -57,6 +57,7 @@ SECTIONS
 
     .data :
     {
+        *(.data)
         *(.data*)
 
         . = ALIGN(8);
@@ -67,13 +68,25 @@ SECTIONS
 
     } : data
 
-    _bss_start = .;
-    .bss :
+    .bss (NOLOAD):
     {
+        . = ALIGN(16);
+        __bss_start = .;
         *(.bss)
         *(COMMON)
+        __bss_end = .;
+
+        . = ALIGN(16);
+        __stack_start = .;
+        . = . + 65536;
+        __stack_end = .;
+
+        . = ALIGN(16);
+        __heap_start = .;
+        . = . + 1024*1024;
+        __heap_end = .;
+
     } : data
-    _bss_end = .;
 
     /DISCARD/ :
     {

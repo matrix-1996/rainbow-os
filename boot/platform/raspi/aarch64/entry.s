@@ -47,17 +47,17 @@
 .globl _start
 _start:
 
-    // Initialize the stack
-    ldr x4, =_boot_stack_top
+    # Initialize the stack
+    ldr x4, =__stack_end
     mov sp, x4
 
-    // Initialize FPU
+    # Initialize FPU
 #    ldr r3, =(0xF << 20)
 #    mcr p15, #0, r3, c1, c0, #2
 #    mov r3, #0x40000000
 #    vmsr FPEXC, r3
 
-    // Jump to raspi_main
+    # Jump to raspi_main
     b raspi_main
 
 
@@ -71,18 +71,3 @@ _start:
 .globl cpu_delay
 cpu_delay:
     ret
-
-
-
-/******************************************************************************
-
-    Boot Stack
-
-******************************************************************************/
-
-.section .bss
-.align 12
-
-_boot_stack:
-.skip 32768
-_boot_stack_top:
