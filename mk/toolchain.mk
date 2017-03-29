@@ -42,7 +42,6 @@ else ifeq ($(TARGET_MACHINE),raspi3)
 	# Processor is BCM2837 (ARMv8)
 	ifeq ($(TARGET_ARCH),aarch64)
 		ARCH_FLAGS := -mcpu=cortex-a53 -mabi=lp64 -mlittle-endian -Wno-format #-mgeneral-regs-only
-		LDFLAGS +=
 	else
 		TARGET_ARCH := arm
 		ARCH_FLAGS := -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=crypto-neon-fp-armv8

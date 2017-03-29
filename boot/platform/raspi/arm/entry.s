@@ -67,9 +67,10 @@ _start:
     push {r2}
 
     # Turn on unaligned memory access
-    mrc p15, #0, r3, c1, c0, #0
-    orr r3, #0x400000
-    mcr p15, #0, r3, c1, c0, #0
+    mrc p15, #0, r3, c1, c0, #0         # Read SCTLR
+#   bic r0, r0, #2                      # no unaligned access fault
+    orr r3, #0x400000                   # v6 unaligned access model
+    mcr p15, #0, r3, c1, c0, #0         # Write SCTLR
 
     # Enabled CP10 and CP11
     mrc p15, #0, r3, c1, c0, #2

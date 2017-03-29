@@ -51,11 +51,46 @@ _start:
     ldr x4, =__stack_end
     mov sp, x4
 
-    # Initialize FPU
+    # Save device tree pointer
+    str x0, [sp, #-16]!
+
+    # Turn on unaligned memory access
+#    mrc p15, #0, r3, c1, c0, #0
+#    orr r3, #0x400000
+#    mcr p15, #0, r3, c1, c0, #0
+
+
+    mrs x4, SCTLR_EL1
+    bic x4, x4, #2
+    orr x4, x4, #0x400000
+    msr SCTLR_EL1, x4
+
+
 #    ldr r3, =(0xF << 20)
 #    mcr p15, #0, r3, c1, c0, #2
 #    mov r3, #0x40000000
 #    vmsr FPEXC, r3
+
+#    uint32_t cpacr;        // Coprocessor access control
+#    cpacr = READ_SPECIALREG(cpacr_el1);
+#    cpacr = (cpacr & ~CPACR_FPEN_MASK) | CPACR_FPEN_TRAP_NONE;
+#    WRITE_SPECIALREG(cpacr_el1, cpacr);
+
+    # Enable FPU
+    mrs x4, CPACR_EL1
+    orr x4, x4, #(3 << 20) // No traps
+    msr CPACR_EL1, x4
+    isb
+
+    # Clear BSS
+    ldr x0, =__bss_start
+    mov x1, #0
+    ldr x2, =__bss_end
+    sub x2, x2, x0
+    bl memset
+
+    # Restore device tree pointer
+    ldr x0, [sp], #16
 
     # Jump to raspi_main
     b raspi_main
